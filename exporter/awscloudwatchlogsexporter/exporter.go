@@ -132,6 +132,8 @@ func logsToCWLogs(logger *zap.Logger, ld pdata.Logs) ([]*cloudwatchlogs.InputLog
 	var dropped int
 	out := make([]*cloudwatchlogs.InputLogEvent, 0) // TODO(jbd): set a better capacity
 
+	logger.Debug("Processing resource logs", zap.Any("ld", ld))
+
 	rls := ld.ResourceLogs()
 	for i := 0; i < rls.Len(); i++ {
 		rl := rls.At(i)
@@ -145,9 +147,10 @@ func logsToCWLogs(logger *zap.Logger, ld pdata.Logs) ([]*cloudwatchlogs.InputLog
 				log := logs.At(k)
 				event, err := logToCWLog(resourceAttrs, log)
 				if err != nil {
-					logger.Debug("Failed to convert to CloudWatch Log", zap.Error(err))
+					logger.Debug("Failed to convert to CloudWatch Log", zap.Error(err), zap.Any("log", log))
 					dropped++
 				} else {
+					logger.Debug("Processed log record", zap.Any("log", log), zap.Any("event", event))
 					out = append(out, event)
 				}
 			}
